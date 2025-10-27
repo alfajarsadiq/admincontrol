@@ -39,7 +39,6 @@ const navItems: NavItem[] = [
   { title: "Settings", path: "/email-settings", icon: Settings, role: 'admin' },
   { title: "Templates", path: "/email-templates", icon: FileText, role: 'admin' },
   { title: "LR Form Generator", path: "/lr-generator", icon: ClipboardList, role: 'lr_user' },
-  // --- UPDATED TITLE ---
   { title: "Order Form Generator", path: "/invoice-generator", icon: Receipt, role: 'lr_user' }, 
   { title: "Orders", path: "/orders", icon: ShoppingCart, role: 'lr_user' },
   { title: "Subscribers", path: "/subscribers", icon: Users, role: 'admin' },
@@ -81,11 +80,12 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         <AnimatePresence>
           {!collapsed ? (
             <motion.div initial="hidden" animate="visible" exit="hidden" variants={textVariants} className="flex items-center gap-3 overflow-hidden">
-              {admin?.logo && <img src={admin.logo} alt="Company Logo" className="w-8 h-8 rounded-lg object-cover flex-shrink-0"/>}
+              {/* Removed logo <img> tag */}
               <span className="font-bold text-foreground whitespace-nowrap">{admin?.companyName}</span>
             </motion.div>
           ) : (
-            admin?.logo && <img src={admin.logo} alt="Company Logo" className="w-8 h-8 rounded-lg object-cover flex-shrink-0"/>
+            // Removed collapsed logo <img> tag
+            null // Render nothing when collapsed and no logo
           )}
         </AnimatePresence>
       </div>
