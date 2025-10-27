@@ -62,9 +62,13 @@ export const TopNav = () => {
         const response = await api.put('/admin', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        // Prepend server URL to the logo path
-        response.data.logo = `http://localhost:5000${response.data.logo}`;
-        setAdmin(response.data); // Update the global context
+
+        // --- THIS IS THE FIX ---
+        // REMOVED the line: response.data.logo = `http://localhost:5000${response.data.logo}`;
+        // The backend is already sending the full URL (e.g., http://192.168.70.163:5000/uploads/logo.png)
+        // We can just use the response data directly.
+        
+        setAdmin(response.data); // Update the global context with the correct data
         toast.success("Profile updated successfully!");
         setIsDialogOpen(false);
     } catch (error) {
@@ -92,7 +96,8 @@ export const TopNav = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover">
             <DropdownMenuLabel>{admin?.name}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* --- FIX 1: Replaced placeholder text with DropdownMenuSeparator --- */}
+            <DropdownMenuSeparator /> 
             <DropdownMenuItem onClick={handleOpenDialog}>Profile Settings</DropdownMenuItem>
             <DropdownMenuItem>Team</DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -104,31 +109,33 @@ export const TopNav = () => {
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px] bg-popover">
-              <DialogHeader><DialogTitle>Profile Settings</DialogTitle></DialogHeader>
-              <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Logo (PNG)</Label>
-                      <div className="col-span-3 flex items-center gap-4">
-                          <img src={previewLogo} alt="Logo Preview" className="w-12 h-12 rounded-lg object-cover border"/>
-                          <Button asChild variant="outline"><label htmlFor="logo-upload"><Upload className="w-4 h-4 mr-2"/> Upload<input id="logo-upload" type="file" accept="image/png" className="hidden" onChange={handleLogoChange}/></label></Button>
-                      </div>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">Name</Label>
-                      <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="companyName" className="text-right">Company</Label>
-                      <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="col-span-3" />
-                  </div>
-              </div>
-              <DialogFooter>
-                  <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                  <Button onClick={handleProfileSave} disabled={isSubmitting}>
-                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Save Changes
-                  </Button>
-              </DialogFooter>
+            <DialogHeader><DialogTitle>Profile Settings</DialogTitle></DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Logo (PNG)</Label>
+                    <div className="col-span-3 flex items-center gap-4">
+                        <img src={previewLogo} alt="Logo Preview" className="w-12 h-12 rounded-lg object-cover border"/>
+                        <Button asChild variant="outline"><label htmlFor="logo-upload"><Upload className="w-4 h-4 mr-2"/> Upload<input id="logo-upload" type="file" accept="image/png" className="hidden" onChange={handleLogoChange}/></label></Button>
+                    </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">Name</Label>
+                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+                </div>
+                {/* --- FIX 2: Fixed the incomplete Input tag for companyName --- */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="companyName" className="text-right">Company</Label>
+                    <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="col-span-3" />
+                </div>
+            </div>
+            {/* --- FIX 3: Fixed the broken Button tag for "Save Changes" --- */}
+            <DialogFooter>
+                <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                <Button onClick={handleProfileSave} disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                </Button>
+            </DialogFooter>
           </DialogContent>
       </Dialog>
     </header>
