@@ -11,8 +11,10 @@ import {
   LoginPayload,
   AdminProfile,
   NewSalespersonPayload,
-  IRecentOrderForm, // Added this for the delete function
-} from '@/types'; // Use path alias, or '../types' if it doesn't work
+  IRecentOrderForm,
+  User, // NEW
+  NewUserPayload, // NEW
+} from '@/types'; 
 
 // This is the type your ProductManagementPage needs
 export interface Product {
@@ -85,6 +87,27 @@ api.interceptors.response.use(
 // --- AUTH ---
 export const loginAdmin = async (loginData: LoginPayload): Promise<AdminProfile> => {
   const { data } = await api.post('/auth/login', loginData);
+  return data;
+};
+
+// --- USERS (NEW) ---
+export const fetchUsers = async (): Promise<User[]> => {
+  const { data } = await api.get('/users');
+  return data;
+};
+
+export const createUser = async (payload: NewUserPayload): Promise<User> => {
+  const { data } = await api.post('/users', payload);
+  return data;
+};
+
+export const deleteUser = async (userId: string): Promise<{ message: string }> => {
+  const { data } = await api.delete(`/users/${userId}`);
+  return data;
+};
+
+export const updateUser = async (userId: string, payload: Partial<NewUserPayload>): Promise<User> => {
+  const { data } = await api.put(`/users/${userId}`, payload);
   return data;
 };
 
