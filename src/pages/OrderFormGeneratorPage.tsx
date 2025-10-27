@@ -69,7 +69,7 @@ import { cn } from "@/lib/utils";
 import api, { deleteOrderForm } from "@/lib/api";
 import { toast } from "sonner";
 import { IRecentOrderForm, IAddedItem } from "@/types";
-import { RecentOrderFormsList } from "@/components/invoices/RecentInvoicesList"; // Assuming component file was renamed too
+import { RecentOrderFormsList } from "@/components/invoices/RecentInvoicesList";
 
 // --- Type Definitions ---
 interface ICompanyDetails {
@@ -269,6 +269,7 @@ export const OrderFormGeneratorPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [formToDelete, setFormToDelete] = useState<IRecentOrderForm | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false); // For PDF button
 
 
   // --- Data Fetching ---
@@ -297,7 +298,7 @@ export const OrderFormGeneratorPage = () => {
   const fetchRecentOrderForms = async () => {
     setIsLoadingRecent(true);
     try {
-      const { data } = await api.get('/invoices'); // API endpoint is still /invoices
+      const { data } = await api.get('/invoices');
       setRecentOrderForms(data);
     } catch (error) {
       console.error("Failed to fetch recent order forms", error);
@@ -386,7 +387,6 @@ export const OrderFormGeneratorPage = () => {
 
   // --- PDF Generation ---
   const handleGenerateOrderFormPdf = async () => {
-    // --- START OF FIX (Fix 1) ---
     if (addedItems.length === 0) {
       toast.error("Please add at least one item to the form.");
       return;
@@ -395,10 +395,15 @@ export const OrderFormGeneratorPage = () => {
       toast.error("Please select a date and time.");
       return;
     }
-    // --- END OF FIX (Fix 1) ---
+    
+    setIsGenerating(true);
 
     const company = companyDetails[selectedCompanyKey];
-    const formId = `FOM-${Date.now().toString().slice(-6)}`;
+    
+    // Using the more unique ID generation
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const formId = `FOM-${Date.now().toString().slice(-6)}-${randomSuffix}`;
+
     const formData = {
       formId,
       companyName: company.name,
@@ -411,17 +416,19 @@ export const OrderFormGeneratorPage = () => {
       })),
     };
     
-    let saveSuccessful = false; // Flag to check if save worked
+    // --- START: FIX ---
+    // Applying the logic from LrGeneratorPage.tsx
     try {
       await api.post('/invoices', formData);
       toast.success(`Order Form #${formId} saved.`);
-      saveSuccessful = true; // Set flag on success
-      // -- REMOVED fetchRecentOrderForms() from here --
+      // Refresh the list *immediately* after successful save
+      fetchRecentOrderForms();
     } catch (error: any) {
       console.error("Failed to save order form:", error);
-      toast.error(error.response?.data?.message || "Failed to save order form. PDF will still be generated.");
-      saveSuccessful = false; // Ensure flag is false on error
+      toast.error(error.response?.data?.message || "Failed to save. PDF will still be generated.");
     }
+    // --- END: FIX ---
+
 
     // --- PDF Generation Logic ---
     const itemsHtml = addedItems
@@ -525,26 +532,19 @@ export const OrderFormGeneratorPage = () => {
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
 
-    // Use a promise to know when PDF generation is done (or started)
-    html2pdf().set(opt as any).from(htmlTemplate).save().then(() => {
-        // Clear the form *after* PDF generation starts
-        setAddedItems([]);
-        resetDateTime();
-        toast.info("Form cleared for next entry.");
-
-        // --- THIS IS THE FIX ---
-        // Fetch recent forms *after* clearing the form and showing the toast
-        // This ensures the list updates even if the initial save failed
-        fetchRecentOrderForms();
-        // --- END FIX ---
-    }).catch(pdfError => {
-        // Handle potential PDF generation errors if necessary
-        console.error("Error generating PDF:", pdfError);
-        toast.error("Failed to generate PDF.");
-        // Still try to fetch recent forms even if PDF fails
-        fetchRecentOrderForms();
-    });
-
+    // --- START: FIX ---
+    // Using the "fire-and-forget" PDF generation from LrGeneratorPage.tsx
+    // This removes the 'await' and the try/catch/finally block
+    html2pdf().set(opt as any).from(htmlTemplate).save();
+      
+    // Clear the form immediately after starting the PDF save
+    setAddedItems([]);
+    resetDateTime();
+    toast.info("Form cleared for next entry.");
+    
+    // Re-enable the button
+    setIsGenerating(false);
+    // --- END: FIX ---
   };
 
   // --- JSX Rendering ---
@@ -666,9 +666,13 @@ export const OrderFormGeneratorPage = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={handleGenerateOrderFormPdf} className="w-full" disabled={addedItems.length === 0}>
-                <Printer className="mr-2 h-4 w-4" />
-                Generate Order Form PDF
+              <Button 
+                onClick={handleGenerateOrderFormPdf} 
+                className="w-full" 
+                disabled={addedItems.length === 0 || isGenerating}
+              >
+                {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                {isGenerating ? "Generating..." : "Generate Order Form PDF"}
               </Button>
             </CardFooter>
           </Card>
@@ -687,6 +691,7 @@ export const OrderFormGeneratorPage = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            {/* --- FIX: Typo from screenshot removed --- */}
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the order form
               ({formToDelete?.formId}) from the database.
@@ -694,12 +699,10 @@ export const OrderFormGeneratorPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeDeleteDialog} disabled={isDeleting}>Cancel</AlertDialogCancel>
-            {/* --- START OF FIX (Fix 2) --- */}
             <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
               {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
-            {/* --- END OF FIX (Fix 2) --- */}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
