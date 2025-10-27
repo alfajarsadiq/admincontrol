@@ -51,7 +51,8 @@ export const UserManagementPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'standard' | 'salesperson' | 'admin'>('standard');
+  // FIX 2: Role state should hold the actual database value, default to 'lr_user'
+  const [role, setRole] = useState<'lr_user' | 'salesperson' | 'admin'>('lr_user');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -67,7 +68,7 @@ export const UserManagementPage = () => {
     setIsLoading(true);
     try {
       const fetchedUsers = await fetchUsers();
-      // Sort users so the admin is often at the top/bottom for visibility
+      // Sort users by name for better display
       setUsers(fetchedUsers.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -93,18 +94,22 @@ export const UserManagementPage = () => {
     }
 
     setIsCreating(true);
+    
+    // FIX 3: Send the current state value, which is one of the valid database roles
     const payload: NewUserPayload = { name, email, password, role };
 
     try {
       const newUser = await createUser(payload);
       toast.success(`User "${newUser.name}" created successfully.`);
       
-      // Update list and clear form
-      setUsers(prev => [...prev, newUser].sort((a, b) => a.name.localeCompare(b.name)));
+      // Refresh the user list to show the new user
+      loadUsers(); 
+      
+      // Clear form
       setName('');
       setEmail('');
       setPassword('');
-      setRole('standard');
+      setRole('lr_user'); // Reset to the standard role
 
     } catch (error: any) {
       const message = error.message.includes("400") ? "Email is already in use." : error.message || "Failed to create user.";
@@ -116,7 +121,6 @@ export const UserManagementPage = () => {
   
   // --- Delete Handlers ---
   const openDeleteAlert = (user: User) => {
-    // --- FIX 1: Corrected admin property access from .id to ._id ---
     if (admin && admin.id === user._id) {
         toast.error("Cannot delete your own account here.");
         return;
@@ -150,10 +154,23 @@ export const UserManagementPage = () => {
   
   // --- View/Edit Handler (Placeholder for future feature) ---
   const handleViewDetails = (user: User) => {
-      // In a full app, this would open a modal to edit the user's name, email, and role.
       // For now, we will just show a toast.
       toast.info(`Viewing details for ${user.name}. (Edit functionality coming soon!)`);
   };
+
+  // --- Helper function to display role name ---
+  const getRoleLabel = (dbRole: string) => {
+      switch(dbRole) {
+          case 'lr_user':
+              return 'Standard User';
+          case 'admin':
+              return 'Admin';
+          case 'salesperson':
+              return 'Salesperson';
+          default:
+              return dbRole;
+      }
+  }
 
 
   // --- JSX Rendering ---
@@ -218,7 +235,8 @@ export const UserManagementPage = () => {
                         <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="standard">Standard User</SelectItem>
+                        {/* FIX 4: Use 'lr_user' as the value, but 'Standard User' as the label */}
+                        <SelectItem value="lr_user">Standard User</SelectItem>
                         <SelectItem value="salesperson">Salesperson</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
@@ -267,7 +285,8 @@ export const UserManagementPage = () => {
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell className="capitalize text-xs">
-                           {user.role}
+                           {/* FIX 5: Use helper function to show 'Standard User' instead of 'lr_user' */}
+                           {getRoleLabel(user.role)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end items-center space-x-2">
@@ -284,7 +303,6 @@ export const UserManagementPage = () => {
                               size="icon"
                               className="text-red-500 hover:text-red-700"
                               onClick={() => openDeleteAlert(user)}
-                              // --- FIX 2: Corrected admin property access from .id to ._id ---
                               disabled={isDeleting || (admin && admin.id === user._id)} 
                             >
                               <Trash className="h-4 w-4" />
