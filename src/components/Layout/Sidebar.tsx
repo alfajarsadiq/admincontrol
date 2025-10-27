@@ -24,7 +24,8 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-type UserRole = 'admin' | 'lr_user' | 'all'; 
+// FIX: Added 'standard' role to ensure correct type checking and logic
+type UserRole = 'admin' | 'lr_user' | 'standard' | 'all'; 
 
 interface NavItem {
     title: string;
@@ -38,7 +39,8 @@ const navItems: NavItem[] = [
   { title: "Reports", path: "/campaign-reports", icon: BarChart3, role: 'admin' },
   { title: "Settings", path: "/email-settings", icon: Settings, role: 'admin' },
   { title: "Templates", path: "/email-templates", icon: FileText, role: 'admin' },
-  { title: "LR Form Generator", path: "/lr-generator", icon: ClipboardList, role: 'lr_user' },
+  // FIX: These roles are tagged as lr_user, but we will allow standard users to access them via code logic below
+  { title: "LR Form Generator", path: "/lr-generator", icon: ClipboardList, role: 'lr_user' }, 
   { title: "Order Form Generator", path: "/invoice-generator", icon: Receipt, role: 'lr_user' }, 
   { title: "Orders", path: "/orders", icon: ShoppingCart, role: 'lr_user' },
   { title: "Subscribers", path: "/subscribers", icon: Users, role: 'admin' },
@@ -46,6 +48,7 @@ const navItems: NavItem[] = [
   { title: "Analytics", path: "/analytics", icon: BarChart3, role: 'admin' },
   { title: "Product Management", path: "/products", icon: PackagePlus, role: 'admin' },
   { title: "Salespersons", path: "/salespersons", icon: UserPlus, role: 'admin' },
+  { title: "User Management", path: "/users", icon: Users, role: 'admin' }, 
 ];
 
 const textVariants = {
@@ -63,12 +66,17 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       return true;
     }
 
+    // Admins see everything
     if (admin.role === 'admin') {
        return true;
     }
     
-    if (admin.role === 'lr_user') {
-      return item.role === 'lr_user';
+    // FIX: Allow both 'lr_user' and 'standard' users to see the 'lr_user' pages
+    const isLrOrStandard = admin.role === 'lr_user' || admin.role === 'standard';
+    
+    if (isLrOrStandard) {
+        // These roles see Order/LR links
+        return item.role === 'lr_user'; 
     }
 
     return false; // Default deny
@@ -80,12 +88,12 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         <AnimatePresence>
           {!collapsed ? (
             <motion.div initial="hidden" animate="visible" exit="hidden" variants={textVariants} className="flex items-center gap-3 overflow-hidden">
-              {/* Removed logo <img> tag */}
-              <span className="font-bold text-foreground whitespace-nowrap">{admin?.companyName}</span>
+              {/* FIX: Display user name instead of companyName */}
+              <span className="font-bold text-foreground whitespace-nowrap">{admin?.name || 'N/A'}</span>
             </motion.div>
           ) : (
-            // Removed collapsed logo <img> tag
-            null // Render nothing when collapsed and no logo
+            // FIX: Display first letter of name when collapsed
+            <span className="font-bold text-xl text-foreground whitespace-nowrap">{admin?.name ? admin.name[0].toUpperCase() : 'N/A'}</span>
           )}
         </AnimatePresence>
       </div>
