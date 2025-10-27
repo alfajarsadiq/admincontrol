@@ -20,9 +20,9 @@ import LrGeneratorPage from "./pages/LrGeneratorPage";
 import OrderPage from "./pages/OrderPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import SalespersonManagementPage from "./pages/SalespersonManagementPage";
-// --- 1. IMPORT THE RENAMED COMPONENT ---
-// (Assuming you renamed the file as requested)
 import OrderFormGeneratorPage from "./pages/OrderFormGeneratorPage";
+// --- FIXED IMPORT: Use named import for UserManagementPage ---
+import { UserManagementPage } from "./pages/UserManagementPage"; 
 
 
 const queryClient = new QueryClient();
@@ -49,14 +49,14 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/products" element={<ProductManagementPage />} />
               <Route path="/salespersons" element={<SalespersonManagementPage />} />
+              {/* --- NEW: USER MANAGEMENT ROUTE --- */}
+              <Route path="/users" element={<UserManagementPage />} /> 
             </Route>
 
             {/* --- Routes for ALL LOGGED-IN USERS (including admin) --- */}
             <Route element={<ProtectedRoute />}>
               <Route path="/lr-generator" element={<LrGeneratorPage />} />
               <Route path="/orders" element={<OrderPage />} />
-              {/* --- 2. USE THE RENAMED COMPONENT --- */}
-              {/* The path is still /invoice-generator for simplicity */}
               <Route path="/invoice-generator" element={<OrderFormGeneratorPage />} />
             </Route>
 
