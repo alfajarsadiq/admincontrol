@@ -56,7 +56,7 @@ export interface NewCompanyPayload {
   location: string;
 }
 
-// --- SALESPERSON TYPES ---
+// --- SALESPERSON TYPES ---\
 export interface Salesperson {
   id: string;
   name: string;
@@ -67,6 +67,22 @@ export interface NewSalespersonPayload {
   password: string;
 }
 
+// --- USER TYPES (NEW) ---
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'standard' | 'salesperson' | 'admin';
+  createdAt: string;
+}
+
+export interface NewUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 // --- AUTH TYPES ---
 export interface LoginPayload {
   email: string;
@@ -75,11 +91,11 @@ export interface LoginPayload {
 
 export interface AdminProfile {
   _id: string;
-  name: string;
+  name: string; // FIX: Required for display
   email: string;
   companyName?: string;
   logo?: string;
-  role?: string;
+  role?: string; // FIX: Optional, but holds 'standard', 'lr_user', or 'admin'
   token: string;
 }
 
