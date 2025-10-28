@@ -21,8 +21,9 @@ import OrderPage from "./pages/OrderPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import SalespersonManagementPage from "./pages/SalespersonManagementPage";
 import OrderFormGeneratorPage from "./pages/OrderFormGeneratorPage";
-// --- FIXED IMPORT: Use named import for UserManagementPage ---
 import { UserManagementPage } from "./pages/UserManagementPage"; 
+// 🔥 NEW IMPORT: Order Status Check Page
+import OrderStatusCheckPage from "./pages/OrderStatusCheckPage";
 
 
 const queryClient = new QueryClient();
@@ -58,6 +59,8 @@ const App = () => (
               <Route path="/lr-generator" element={<LrGeneratorPage />} />
               <Route path="/orders" element={<OrderPage />} />
               <Route path="/invoice-generator" element={<OrderFormGeneratorPage />} />
+              {/* 🔥 NEW ROUTE: Order Status Check */}
+              <Route path="/order-status-check" element={<OrderStatusCheckPage />} /> 
             </Route>
 
             <Route path="*" element={<NotFound />} />
