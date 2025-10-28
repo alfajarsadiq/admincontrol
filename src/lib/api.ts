@@ -12,11 +12,10 @@ import {
   AdminProfile,
   NewSalespersonPayload,
   IRecentOrderForm,
-  User, // NEW
-  NewUserPayload, // NEW
+  User, 
+  NewUserPayload, 
 } from '@/types'; 
 
-// This is the type your ProductManagementPage needs
 export interface Product {
     _id: string;
     name: string;
@@ -24,19 +23,39 @@ export interface Product {
     createdAt?: string;
 }
 
-// --- START OF FIX ---
+// 🔥 NEW TYPE DEFINITION for Order Status
+export interface OrderStatusDetails {
+    orderId: string;
+    companyName: string;
+    salesperson: string;
+    createdAt: string; // Order Date
+    deliveryDate: string;
+    status: string;
+}
+
+// 🔥 NEW TYPE FOR DELIVERY CONFIRMATION PAYLOAD
+interface DeliveryConfirmationPayload {
+    orderId: string;
+    salesperson: string;
+    password: string;
+}
+
+// 🔥 NEW TYPE FOR DELIVERY CONFIRMATION RESPONSE
+interface DeliveryConfirmationResponse {
+    msg: string;
+    orderId: string;
+    status: string;
+}
+
 // Use the VITE environment variable for the base URL
-// This will be 'https://adminapi.ferrarifoods.com' in Vercel
-// and 'http://localhost:5000' (or your Google VM IP) in local development
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
-  baseURL: API_URL, // Use the environment variable
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-// --- END OF FIX ---
 
 // Interceptor to add the auth token to every request
 api.interceptors.request.use(
@@ -58,15 +77,12 @@ api.interceptors.response.use(
   (error) => {
     // Handle auth errors
     if (error.response && error.response.status === 401) {
-      // Don't log out for "incorrect password" on specific API calls
-      if (error.response.data?.message === 'Password is incorrect') {
-        return Promise.reject(error);
-      }
-      if (error.response.data?.message?.includes('authorized')) {
-          return Promise.reject(error);
+      
+      // Check for specific password error from backend
+      if (error.response.data?.msg?.includes('Invalid password')) {
+        return Promise.reject(new Error(error.response.data.msg));
       }
       
-      // For all other 401 errors, log out the user
       const msg = error.response.data?.msg || "Session expired. Please log in again.";
       toast.error(msg);
       localStorage.removeItem('authToken');
@@ -75,10 +91,11 @@ api.interceptors.response.use(
          window.location.href = '/login';
       }
     } else if (error.response && error.response.status === 403) {
-        // Handle 403 (Forbidden) errors
         const msg = error.response.data?.message || "You are not authorized to perform this action.";
         toast.error(msg);
-        return Promise.reject(error);
+        return Promise.reject(new Error(msg));
+    } else if (error.response && error.response.data?.msg) {
+        return Promise.reject(new Error(error.response.data.msg));
     }
     return Promise.reject(error);
   }
@@ -111,7 +128,7 @@ export const updateUser = async (userId: string, payload: Partial<NewUserPayload
   return data;
 };
 
-// --- PRODUCTS --- (These are the exports you need)
+// --- PRODUCTS ---
 export const fetchProducts = async (): Promise<Product[]> => {
   const { data } = await api.get('/products');
   return data.map((item: any) => ({
@@ -147,6 +164,19 @@ export const deleteOrder = async (orderId: string): Promise<{ msg: string }> => 
   const { data } = await api.delete(`/orders/${orderId}`);
   return data;
 };
+
+// 🔥 NEW FUNCTION: Fetch Order Status
+export const fetchOrderStatus = async (orderId: string): Promise<OrderStatusDetails> => {
+    const { data } = await api.get(`/orders/status/${orderId}`);
+    return data;
+};
+
+// 🔥 NEW FUNCTION: Confirm Delivery (PUT /api/orders/confirm-delivery)
+export const confirmDelivery = async (payload: DeliveryConfirmationPayload): Promise<DeliveryConfirmationResponse> => {
+    const { data } = await api.put(`/orders/confirm-delivery`, payload);
+    return data;
+};
+
 
 // --- COMPANIES ---
 export const fetchCompanies = async (): Promise<Company[]> => {
