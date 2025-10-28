@@ -14,6 +14,8 @@ import {
   PackagePlus,
   UserPlus, 
   Receipt,
+  // 🔥 IMPORT THE NEW ICON
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -43,6 +45,8 @@ const navItems: NavItem[] = [
   { title: "LR Form Generator", path: "/lr-generator", icon: ClipboardList, role: 'lr_user' }, 
   { title: "Purchase Bill Generator", path: "/invoice-generator", icon: Receipt, role: 'lr_user' }, 
   { title: "Orders", path: "/orders", icon: ShoppingCart, role: 'lr_user' },
+  // 🔥 NEW ITEM: Order Status Check - accessible to standard/lr_user
+  { title: "Order Status Check", path: "/order-status-check", icon: Search, role: 'lr_user' }, 
   { title: "Subscribers", path: "/subscribers", icon: Users, role: 'admin' },
   { title: "Campaigns", path: "/campaigns", icon: Send, role: 'admin' },
   { title: "Analytics", path: "/analytics", icon: BarChart3, role: 'admin' },
@@ -75,7 +79,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     const isLrOrStandard = admin.role === 'lr_user' || admin.role === 'standard';
     
     if (isLrOrStandard) {
-        // These roles see Order/LR links
+        // These roles see Order/LR links, including the new status check
         return item.role === 'lr_user'; 
     }
 
