@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
   { title: "Templates", path: "/email-templates", icon: FileText, role: 'admin' },
   // FIX: These roles are tagged as lr_user, but we will allow standard users to access them via code logic below
   { title: "LR Form Generator", path: "/lr-generator", icon: ClipboardList, role: 'lr_user' }, 
-  { title: "Order Form Generator", path: "/invoice-generator", icon: Receipt, role: 'lr_user' }, 
+  { title: "Purchase Bill Generator", path: "/invoice-generator", icon: Receipt, role: 'lr_user' }, 
   { title: "Orders", path: "/orders", icon: ShoppingCart, role: 'lr_user' },
   { title: "Subscribers", path: "/subscribers", icon: Users, role: 'admin' },
   { title: "Campaigns", path: "/campaigns", icon: Send, role: 'admin' },
