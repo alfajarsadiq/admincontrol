@@ -208,7 +208,7 @@ const OrderFormView = ({ form }: { form: IRecentOrderForm | null }) => {
             </div>
         </header>
         <div class="text-center my-8">
-            <h1 class="text-3xl font-bold text-gray-800 tracking-wide">ORDER FORM</h1>
+            <h1 class="text-3xl font-bold text-gray-800 tracking-wide">PURCHASE BILL</h1>
         </div>
         <section class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-8">
             <div class="flex items-center border-b border-gray-400 py-2">
@@ -301,7 +301,7 @@ export const OrderFormGeneratorPage = () => {
       const { data } = await api.get('/invoices');
       setRecentOrderForms(data);
     } catch (error) {
-      console.error("Failed to fetch recent order forms", error);
+      console.error("Failed to fetch recent Purchase forms", error);
     } finally {
       setIsLoadingRecent(false);
     }
@@ -374,7 +374,7 @@ export const OrderFormGeneratorPage = () => {
     setIsDeleting(true);
     try {
       await deleteOrderForm(formToDelete._id);
-      toast.success(`Order Form ${formToDelete.formId} deleted successfully.`);
+      toast.success(`Purchase Form ${formToDelete.formId} deleted successfully.`);
       setRecentOrderForms(prev => prev.filter(form => form._id !== formToDelete._id));
       closeDeleteDialog();
     } catch (error: any) {
@@ -420,7 +420,7 @@ export const OrderFormGeneratorPage = () => {
     // Applying the logic from LrGeneratorPage.tsx
     try {
       await api.post('/invoices', formData);
-      toast.success(`Order Form #${formId} saved.`);
+      toast.success(`Purchase Form #${formId} saved.`);
       // Refresh the list *immediately* after successful save
       fetchRecentOrderForms();
     } catch (error: any) {
@@ -458,7 +458,7 @@ export const OrderFormGeneratorPage = () => {
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${company.name} - Order Form</title>
+          <title>${company.name} - Purchase Bill</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -484,7 +484,7 @@ export const OrderFormGeneratorPage = () => {
                   </div>
               </header>
               <div class="text-center my-8">
-                  <h1 class="text-3xl font-bold text-gray-800 tracking-wide">ORDER FORM</h1>
+                  <h1 class="text-3xl font-bold text-gray-800 tracking-wide">PURCHASE BILL</h1>
               </div>
               <section class="grid grid-cols-2 gap-x-8 gap-y-4 mb-8">
                   <div class="flex items-center border-b border-gray-400 py-2">
@@ -550,13 +550,13 @@ export const OrderFormGeneratorPage = () => {
   // --- JSX Rendering ---
   return (
     <div className="p-6 md:p-8 space-y-6 bg-muted/40 min-h-screen">
-      <h1 className="text-3xl font-bold">Order Form Generator</h1>
+      <h1 className="text-3xl font-bold">Purchase Bill Generator</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Details Card */}
           <Card>
-            <CardHeader><CardTitle>Order Form Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Purchase Bill Details</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -672,7 +672,7 @@ export const OrderFormGeneratorPage = () => {
                 disabled={addedItems.length === 0 || isGenerating}
               >
                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-                {isGenerating ? "Generating..." : "Generate Order Form PDF"}
+                {isGenerating ? "Generating..." : "Generate Purchase Bill PDF"}
               </Button>
             </CardFooter>
           </Card>
@@ -693,7 +693,7 @@ export const OrderFormGeneratorPage = () => {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             {/* --- FIX: Typo from screenshot removed --- */}
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the order form
+              This action cannot be undone. This will permanently delete the purchase bill
               ({formToDelete?.formId}) from the database.
             </AlertDialogDescription>
           </AlertDialogHeader>
