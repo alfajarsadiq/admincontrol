@@ -37,6 +37,8 @@ export interface ConfirmedOrder {
   deliveryLocation: string;
   items: { 
     id: string; 
+    // 🔥 FIX: ADDED itemId to the item object for update logic
+    itemId: string; 
     name: string; 
     qty: number;
   }[];
