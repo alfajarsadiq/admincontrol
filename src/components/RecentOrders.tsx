@@ -1,4 +1,5 @@
-// src/components/RecentOrders.tsx
+// File: src/components/RecentOrders.tsx (Updated)
+
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, FileDown, FileText, Loader2, Trash2 } from "lucide-react"; 
+import { Eye, FileDown, FileText, Loader2, Trash2, Edit } from "lucide-react"; // 🔥 IMPORT Edit ICON
 import { toast } from "sonner";
 import {
   Dialog,
@@ -44,6 +45,9 @@ import {
 import { DownloadTodaysDeliveriesButton } from "./DownloadTodaysDeliveriesButton";
 import { ConfirmedOrder } from "@/types";
 
+// 🔥 IMPORT NEW MODAL
+import { EditOrderModal } from "./orders/EditOrderModal"; 
+
 interface RecentOrdersProps {
   // No props needed
 }
@@ -56,7 +60,14 @@ const handleDownloadPDF = (order: ConfirmedOrder) => {
 };
 
 export const RecentOrders: React.FC<RecentOrdersProps> = () => {
+  // State for View Details Modal
   const [selectedOrder, setSelectedOrder] = useState<ConfirmedOrder | null>(null);
+  
+  // 🔥 STATE FOR EDIT MODAL
+  const [orderToEdit, setOrderToEdit] = useState<ConfirmedOrder | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // State for Export/Delete
   const [excelDate, setExcelDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -132,6 +143,18 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
       deleteMutation.mutate(orderToDelete.orderId);
     }
   };
+  
+  // 🔥 NEW HANDLER: Opens the edit modal
+  const handleEditClick = (order: ConfirmedOrder) => {
+    setOrderToEdit(order);
+    setIsEditModalOpen(true);
+  };
+  
+  // 🔥 NEW HANDLER: Closes the edit modal and resets state
+  const handleCloseEditModal = () => {
+    setOrderToEdit(null);
+    setIsEditModalOpen(false);
+  }
 
   return (
     <>
@@ -178,6 +201,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                   <TableRow>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Company Name</TableHead>
+                    <TableHead>Salesperson</TableHead> {/* Added Salesperson column for context */}
                     <TableHead>Order Date</TableHead>
                     <TableHead>Delivery Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -186,19 +210,19 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         <Loader2 className="w-5 h-5 mx-auto animate-spin" />
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-destructive">
+                      <TableCell colSpan={6} className="text-center text-destructive">
                         Failed to load recent orders.
                       </TableCell>
                     </TableRow>
                   ) : orders.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         No confirmed orders yet.
                       </TableCell>
                     </TableRow>
@@ -209,11 +233,23 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                           {order.orderId}
                         </TableCell>
                         <TableCell>{order.companyName}</TableCell>
+                        <TableCell>{order.salesperson}</TableCell> {/* Display salesperson */}
                         <TableCell>{order.currentDate}</TableCell>
                         <TableCell>{order.deliveryDate || "N/A"}</TableCell>
                         {/* Use a flex container for actions to prevent weird wrapping */}
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            
+                            {/* 🔥 NEW EDIT BUTTON */}
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              title="Edit Order"
+                              onClick={() => handleEditClick(order)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            
                             <DialogTrigger asChild>
                               <Button
                                 variant="outline"
@@ -311,6 +347,13 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
           )} 
         </DialogContent>
       </Dialog>
+      
+      {/* 🔥 NEW EDIT MODAL INTEGRATION */}
+      <EditOrderModal 
+        order={orderToEdit}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+      />
 
       {/* Delete Confirmation Dialog (No changes needed) */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
