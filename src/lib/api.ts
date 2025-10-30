@@ -1,4 +1,4 @@
-// File: src/lib/api.ts
+// File: src/lib/api.ts (Updated)
 
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import {
   IRecentOrderForm,
   User, 
   NewUserPayload, 
+  OrderItem, // Import OrderItem to use in UpdatePayload
 } from '@/types'; 
 
 export interface Product {
@@ -23,7 +24,16 @@ export interface Product {
     createdAt?: string;
 }
 
-// 🔥 NEW TYPE DEFINITION for Order Status
+// 🔥 NEW TYPE DEFINITION: Payload for Order Update
+export interface UpdateOrderPayload {
+    salespersonName: string; // Used to find and authenticate the salesperson
+    salespersonPassword: string; // Password for verification
+    updatedItems: { itemId: string; qty: number }[]; // Array of product IDs and quantities
+    companyName?: string;
+    deliveryDate?: string;
+}
+
+// 櫨 NEW TYPE DEFINITION for Order Status
 export interface OrderStatusDetails {
     orderId: string;
     companyName: string;
@@ -33,14 +43,14 @@ export interface OrderStatusDetails {
     status: string;
 }
 
-// 🔥 NEW TYPE FOR DELIVERY CONFIRMATION PAYLOAD
+// 櫨 NEW TYPE FOR DELIVERY CONFIRMATION PAYLOAD
 interface DeliveryConfirmationPayload {
     orderId: string;
     salesperson: string;
     password: string;
 }
 
-// 🔥 NEW TYPE FOR DELIVERY CONFIRMATION RESPONSE
+// 櫨 NEW TYPE FOR DELIVERY CONFIRMATION RESPONSE
 interface DeliveryConfirmationResponse {
     msg: string;
     orderId: string;
@@ -80,7 +90,9 @@ api.interceptors.response.use(
       
       // Check for specific password error from backend
       if (error.response.data?.msg?.includes('Invalid password')) {
-        return Promise.reject(new Error(error.response.data.msg));
+        // We reject the error with a plain Error object so tanstack-query catches it
+        // and we can show a specific toast in the mutation's onError handler.
+        return Promise.reject(new Error(error.response.data.msg)); 
       }
       
       const msg = error.response.data?.msg || "Session expired. Please log in again.";
@@ -91,10 +103,11 @@ api.interceptors.response.use(
          window.location.href = '/login';
       }
     } else if (error.response && error.response.status === 403) {
-        const msg = error.response.data?.message || "You are not authorized to perform this action.";
+        const msg = error.response.data?.msg || "You are not authorized to perform this action."; // Use error.response.data.msg if available
         toast.error(msg);
         return Promise.reject(new Error(msg));
     } else if (error.response && error.response.data?.msg) {
+        // This catches general 400/500 errors with a custom message
         return Promise.reject(new Error(error.response.data.msg));
     }
     return Promise.reject(error);
@@ -165,13 +178,19 @@ export const deleteOrder = async (orderId: string): Promise<{ msg: string }> => 
   return data;
 };
 
-// 🔥 NEW FUNCTION: Fetch Order Status
+// 🔥 NEW FUNCTION: Update Order
+export const updateOrder = async ({ orderId, payload }: { orderId: string; payload: UpdateOrderPayload }): Promise<{ msg: string; order: ConfirmedOrder }> => {
+    const { data } = await api.patch(`/orders/${orderId}`, payload);
+    return data;
+};
+
+// 櫨 NEW FUNCTION: Fetch Order Status
 export const fetchOrderStatus = async (orderId: string): Promise<OrderStatusDetails> => {
     const { data } = await api.get(`/orders/status/${orderId}`);
     return data;
 };
 
-// 🔥 NEW FUNCTION: Confirm Delivery (PUT /api/orders/confirm-delivery)
+// 櫨 NEW FUNCTION: Confirm Delivery (PUT /api/orders/confirm-delivery)
 export const confirmDelivery = async (payload: DeliveryConfirmationPayload): Promise<DeliveryConfirmationResponse> => {
     const { data } = await api.put(`/orders/confirm-delivery`, payload);
     return data;
