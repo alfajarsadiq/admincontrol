@@ -74,7 +74,8 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'standard' | 'salesperson' | 'admin';
+  // 🔥 FIX: Added 'lr_user' role
+  role: 'standard' | 'salesperson' | 'admin' | 'lr_user';
   createdAt: string;
 }
 
@@ -97,7 +98,8 @@ export interface AdminProfile {
   email: string;
   companyName?: string;
   logo?: string;
-  role?: string; // FIX: Optional, but holds 'standard', 'lr_user', or 'admin'
+  // 🔥 FIX: Updated AdminProfile role type to include 'lr_user'
+  role?: 'standard' | 'salesperson' | 'admin' | 'lr_user'; 
   token: string;
 }
 
