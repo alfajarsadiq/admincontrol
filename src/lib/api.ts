@@ -1,7 +1,8 @@
-// File: src/lib/api.ts (Updated)
+// File: src/lib/api.ts (Consolidated and Corrected)
 
 import axios from 'axios';
 import { toast } from 'sonner';
+// NOTE: Assuming these types are defined in '@/types'
 import {
   NewOrderPayload,
   ConfirmedOrder,
@@ -11,10 +12,8 @@ import {
   LoginPayload,
   AdminProfile,
   NewSalespersonPayload,
-  IRecentOrderForm,
   User, 
   NewUserPayload, 
-  OrderItem, // Import OrderItem to use in UpdatePayload
 } from '@/types'; 
 
 export interface Product {
@@ -24,40 +23,47 @@ export interface Product {
     createdAt?: string;
 }
 
-// 🔥 NEW TYPE DEFINITION: Payload for Order Update
+// Type definitions from recent updates
 export interface UpdateOrderPayload {
-    salespersonName: string; // Used to find and authenticate the salesperson
-    salespersonPassword: string; // Password for verification
-    updatedItems: { itemId: string; qty: number }[]; // Array of product IDs and quantities
+    salespersonName: string; 
+    salespersonPassword: string; 
+    updatedItems: { itemId: string; qty: number }[];
     companyName?: string;
     deliveryDate?: string;
 }
 
-// 櫨 NEW TYPE DEFINITION for Order Status
 export interface OrderStatusDetails {
     orderId: string;
     companyName: string;
     salesperson: string;
-    createdAt: string; // Order Date
+    createdAt: string; 
     deliveryDate: string;
     status: string;
 }
 
-// 櫨 NEW TYPE FOR DELIVERY CONFIRMATION PAYLOAD
-interface DeliveryConfirmationPayload {
+interface ConfirmationPayload {
     orderId: string;
     salesperson: string;
     password: string;
 }
 
-// 櫨 NEW TYPE FOR DELIVERY CONFIRMATION RESPONSE
-interface DeliveryConfirmationResponse {
+interface DispatchConfirmationPayload extends ConfirmationPayload {
+    driverName: string;
+    vehicleName: string;
+}
+
+interface ConfirmationResponse {
     msg: string;
     orderId: string;
     status: string;
 }
 
-// Use the VITE environment variable for the base URL
+export interface DispatchConfirmationResponse extends ConfirmationResponse {
+    driverName: string;
+    vehicleName: string;
+    dispatchedAt: Date;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
@@ -67,7 +73,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor to add the auth token to every request
+// 🔥 FIX: Request Interceptor to add the auth token to every request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -81,33 +87,28 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor to handle 401 (Unauthorized) errors
+// 🔥 FIX: Response Interceptor to handle 401 (Unauthorized) errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle auth errors
     if (error.response && error.response.status === 401) {
       
-      // Check for specific password error from backend
+      // Check for specific password error from backend (do not redirect for this)
       if (error.response.data?.msg?.includes('Invalid password')) {
-        // We reject the error with a plain Error object so tanstack-query catches it
-        // and we can show a specific toast in the mutation's onError handler.
         return Promise.reject(new Error(error.response.data.msg)); 
       }
       
+      // Global 401 handling: Clear token and redirect to login
       const msg = error.response.data?.msg || "Session expired. Please log in again.";
       toast.error(msg);
       localStorage.removeItem('authToken');
       localStorage.removeItem('adminProfile');
+      
       if (window.location.pathname !== '/login') {
          window.location.href = '/login';
       }
-    } else if (error.response && error.response.status === 403) {
-        const msg = error.response.data?.msg || "You are not authorized to perform this action."; // Use error.response.data.msg if available
-        toast.error(msg);
-        return Promise.reject(new Error(msg));
     } else if (error.response && error.response.data?.msg) {
-        // This catches general 400/500 errors with a custom message
+        // Catch other errors (400, 500) with a custom message
         return Promise.reject(new Error(error.response.data.msg));
     }
     return Promise.reject(error);
@@ -120,7 +121,7 @@ export const loginAdmin = async (loginData: LoginPayload): Promise<AdminProfile>
   return data;
 };
 
-// --- USERS (NEW) ---
+// --- USERS ---
 export const fetchUsers = async (): Promise<User[]> => {
   const { data } = await api.get('/users');
   return data;
@@ -178,21 +179,27 @@ export const deleteOrder = async (orderId: string): Promise<{ msg: string }> => 
   return data;
 };
 
-// 🔥 NEW FUNCTION: Update Order
+// NEW FUNCTION: Update Order
 export const updateOrder = async ({ orderId, payload }: { orderId: string; payload: UpdateOrderPayload }): Promise<{ msg: string; order: ConfirmedOrder }> => {
     const { data } = await api.patch(`/orders/${orderId}`, payload);
     return data;
 };
 
-// 櫨 NEW FUNCTION: Fetch Order Status
+// NEW FUNCTION: Fetch Order Status
 export const fetchOrderStatus = async (orderId: string): Promise<OrderStatusDetails> => {
     const { data } = await api.get(`/orders/status/${orderId}`);
     return data;
 };
 
-// 櫨 NEW FUNCTION: Confirm Delivery (PUT /api/orders/confirm-delivery)
-export const confirmDelivery = async (payload: DeliveryConfirmationPayload): Promise<DeliveryConfirmationResponse> => {
+// NEW FUNCTION: Confirm Delivery (PUT /api/orders/confirm-delivery)
+export const confirmDelivery = async (payload: ConfirmationPayload): Promise<ConfirmationResponse> => {
     const { data } = await api.put(`/orders/confirm-delivery`, payload);
+    return data;
+};
+
+// NEW FUNCTION: Confirm Dispatch (PUT /api/orders/confirm-dispatch)
+export const confirmDispatch = async (payload: DispatchConfirmationPayload): Promise<DispatchConfirmationResponse> => {
+    const { data } = await api.put(`/orders/confirm-dispatch`, payload);
     return data;
 };
 
@@ -238,7 +245,7 @@ export const deleteSalesperson = async (salespersonId: string): Promise<{ msg: s
 // --- LR FORMS ---
 export const deleteLr = async (lrId: string, password: string): Promise<{ message: string }> => {
   const { data } = await api.delete(`/lrs/${lrId}`, {
-    data: { password } // Send password in the request body
+    data: { password }
   });
   return data;
 };
@@ -255,6 +262,14 @@ export const fetchTodaysDeliveryLocations = async (): Promise<string[]> => {
   return data;
 };
 
+// NEW FUNCTION: Fetch delivery locations by date
+export const fetchDeliveryLocationsByDate = async (date: string): Promise<string[]> => {
+  const { data } = await api.get('/orders/locations/by-date', {
+    params: { date },
+  });
+  return data;
+};
+
 export const downloadTodaysDeliveriesByLocation = async (location: string): Promise<Blob> => {
   try {
     const response = await api.get('/orders/download/today', {
@@ -262,7 +277,6 @@ export const downloadTodaysDeliveriesByLocation = async (location: string): Prom
       responseType: 'blob',
     });
     const blob = response.data as Blob;
-    // Check if the server returned a JSON error instead of a file
     if (blob.type === 'application/json') {
       const errorText = await blob.text();
       const errorData = JSON.parse(errorText);
@@ -270,7 +284,6 @@ export const downloadTodaysDeliveriesByLocation = async (location: string): Prom
     }
     return blob;
   } catch (error) {
-    // Handle network or other errors
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.data?.type === 'application/json') {
         const errorText = await (error.response.data as Blob).text();
@@ -284,14 +297,14 @@ export const downloadTodaysDeliveriesByLocation = async (location: string): Prom
   }
 };
 
-export const downloadOrdersByDate = async (date: string): Promise<Blob> => {
+// UPDATED FUNCTION: Now accepts 'date' AND 'location'
+export const downloadOrdersByDate = async (date: string, location: string): Promise<Blob> => {
   try {
     const response = await api.get('/orders/download/by-date', {
-      params: { date },
+      params: { date, location }, 
       responseType: 'blob',
     });
     const blob = response.data as Blob;
-    // Check for JSON error
     if (blob.type === 'application/json') {
       const errorText = await blob.text();
       const errorData = JSON.parse(errorText);
@@ -299,7 +312,6 @@ export const downloadOrdersByDate = async (date: string): Promise<Blob> => {
     }
     return blob;
   } catch (error) {
-    // Handle network or other errors
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.data?.type === 'application/json') {
         const errorText = await (error.response.data as Blob).text();
