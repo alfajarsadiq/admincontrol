@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, FileDown, FileText, Loader2, Trash2, Edit } from "lucide-react"; // 🔥 IMPORT Edit ICON
+import { Eye, FileDown, FileText, Loader2, Trash2, Edit } from "lucide-react"; 
 import { toast } from "sonner";
 import {
   Dialog,
@@ -40,12 +40,15 @@ import { saveAs } from "file-saver";
 import { 
   fetchRecentOrders, 
   deleteOrder, 
-  downloadOrdersByDate 
+  // 💥 downloadOrdersByDate is no longer imported here
 } from "@/lib/api";
 import { DownloadTodaysDeliveriesButton } from "./DownloadTodaysDeliveriesButton";
 import { ConfirmedOrder } from "@/types";
 
-// 🔥 IMPORT NEW MODAL
+// 🔥 IMPORT NEW DATE-BASED DOWNLOAD BUTTON
+import { DownloadDeliveriesByDateButton } from "./DownloadDeliveriesByDateButton"; 
+
+// 櫨 IMPORT NEW MODAL
 import { EditOrderModal } from "./orders/EditOrderModal"; 
 
 interface RecentOrdersProps {
@@ -63,19 +66,16 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
   // State for View Details Modal
   const [selectedOrder, setSelectedOrder] = useState<ConfirmedOrder | null>(null);
   
-  // 🔥 STATE FOR EDIT MODAL
+  // 櫨 STATE FOR EDIT MODAL
   const [orderToEdit, setOrderToEdit] = useState<ConfirmedOrder | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // State for Export/Delete
-  const [excelDate, setExcelDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  // 💥 REMOVED: excelDate state
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<ConfirmedOrder | null>(null);
   
-  const [isExporting, setIsExporting] = useState(false);
+  // 💥 REMOVED: isExporting state and handleExcelExport logic
 
   const queryClient = useQueryClient();
 
@@ -104,34 +104,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
     }
   });
 
-  const handleExcelExport = async () => {
-    if (!excelDate) {
-      toast.error("Please select a date to export.");
-      return;
-    }
-    
-    setIsExporting(true);
-    const toastId = toast.loading(`Generating report for ${excelDate}...`);
-
-    try {
-      const blob = await downloadOrdersByDate(excelDate);
-      
-      const filename = `orders_report_${excelDate}.xlsx`;
-      saveAs(blob, filename); 
-
-      toast.success(`Report for ${excelDate} downloaded!`, {
-        id: toastId,
-      });
-
-    } catch (err: any) {
-      console.error('Failed to download report:', err);
-      toast.error(err.message || 'Failed to download report.', {
-        id: toastId,
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  // 💥 REMOVED: handleExcelExport is deprecated/moved
 
   const handleDeleteClick = (order: ConfirmedOrder) => {
     setOrderToDelete(order);
@@ -144,13 +117,13 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
     }
   };
   
-  // 🔥 NEW HANDLER: Opens the edit modal
+  // 櫨 NEW HANDLER: Opens the edit modal
   const handleEditClick = (order: ConfirmedOrder) => {
     setOrderToEdit(order);
     setIsEditModalOpen(true);
   };
   
-  // 🔥 NEW HANDLER: Closes the edit modal and resets state
+  // 櫨 NEW HANDLER: Closes the edit modal and resets state
   const handleCloseEditModal = () => {
     setOrderToEdit(null);
     setIsEditModalOpen(false);
@@ -160,11 +133,18 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
     <>
       <Dialog>
         <Card className="col-span-1 lg:col-span-3">
-          {/* --- START OF MOBILE FIX 1: Header layout --- */}
+          {/* --- START OF HEADER UPDATE --- */}
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Recent Confirmed Orders</CardTitle>
             <div className="flex items-center gap-2 flex-wrap w-full md:w-auto justify-start">
-              {/* --- END OF MOBILE FIX 1 --- */}
+              
+              {/* 🔥 NEW COMPONENT: Handles date selection and location download */}
+              <DownloadDeliveriesByDateButton /> 
+              
+              {/* Existing "Today's Deliveries" button */}
+              <DownloadTodaysDeliveriesButton />
+              
+              {/* 💥 REMOVED OLD DATE INPUT AND EXPORT BUTTON
               <Label htmlFor="excel-date" className="text-sm font-medium sr-only">
                 Export Date:
               </Label>
@@ -182,21 +162,16 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                 disabled={isExporting} 
                 title="Download all orders for the selected date"
               >
-                {isExporting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <FileDown className="w-4 h-4 mr-2" />
-                )}
-                {isExporting ? "Exporting..." : "Export by Date"}
+                ... (Export Button Content)
               </Button>
-              <DownloadTodaysDeliveriesButton />
+              */}
             </div>
           </CardHeader>
+          {/* --- END OF HEADER UPDATE --- */}
           <CardContent>
-            {/* --- START OF MOBILE FIX 2: Table horizontal scroll --- */}
+            {/* ... (Table content remains unchanged) */}
             <div className="overflow-x-auto">
               <Table>
-            {/* --- END OF MOBILE FIX 2 --- */}
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order ID</TableHead>
@@ -240,7 +215,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             
-                            {/* 🔥 NEW EDIT BUTTON */}
+                            {/* 櫨 NEW EDIT BUTTON */}
                             <Button
                               variant="secondary"
                               size="icon"
@@ -290,7 +265,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
           </CardContent>
         </Card>
 
-        {/* View Order Details Dialog */}
+        {/* View Order Details Dialog (Remains unchanged) */}
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Order Details: {selectedOrder?.orderId}</DialogTitle>
@@ -298,9 +273,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
           {selectedOrder && (
             <>
               <div className="max-h-[70vh] overflow-y-auto pr-4">
-                {/* --- START OF MOBILE FIX 3: Dialog grid --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {/* --- END OF MOBILE FIX 3 --- */}
                   <div>
                     <strong>Company:</strong> {selectedOrder.companyName}
                   </div>
@@ -348,14 +321,14 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
         </DialogContent>
       </Dialog>
       
-      {/* 🔥 NEW EDIT MODAL INTEGRATION */}
+      {/* 櫨 NEW EDIT MODAL INTEGRATION */}
       <EditOrderModal 
         order={orderToEdit}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
       />
 
-      {/* Delete Confirmation Dialog (No changes needed) */}
+      {/* Delete Confirmation Dialog (Remains unchanged) */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
