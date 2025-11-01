@@ -1,4 +1,4 @@
-// File: src/pages/OrderStatusCheckPage.tsx
+// File: src/pages/OrderStatusCheckPage.tsx (Updated with OrderExportButton and Tracker)
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Search, XCircle } from 'lucide-react';
 import { fetchOrderStatus, OrderStatusDetails } from '@/lib/api';
 import { toast } from 'sonner';
-// 🔥 IMPORT NEW COMPONENT
+
+// 🔥 IMPORT THE NEW EXPORT BUTTON and the TRACKER COMPONENT
+import OrderExportButton from '@/components/OrderExportButton';
 import OrderStatusTracker from '@/components/OrderStatusTracker'; 
 
 // Define the state structure for the search result
@@ -136,7 +138,6 @@ const OrderStatusCheckPage = () => {
           </div>
           
           {/* 2. Order Tracking Section (New Component) */}
-          {/* FIX: Since 'data' is now guaranteed to be OrderStatusDetails, the error is gone. */}
           <OrderStatusTracker 
             order={data} 
             salespersonName={salesperson} 
@@ -163,28 +164,34 @@ const OrderStatusCheckPage = () => {
           <CardDescription>Enter the Order ID (e.g., ORD-10001) to view details.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch} className="flex space-x-3">
-            <Input
-              placeholder="Enter Order ID (e.g., ORD-10001)"
-              value={orderIdInput}
-              onChange={(e) => setOrderIdInput(e.target.value)}
-              className="max-w-md"
-              disabled={isFetching}
-            />
-            <Button type="submit" disabled={isFetching}>
-              {isFetching && searchedOrderId ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Searching
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
-                </>
-              )}
-            </Button>
-          </form>
+          {/* 🔥 Layout Fix: Main container for Search and Download Button */}
+          <div className="flex gap-3 items-center">
+            <form onSubmit={handleSearch} className="flex space-x-3 flex-1">
+              <Input
+                placeholder="Enter Order ID (e.g., ORD-10001)"
+                value={orderIdInput}
+                onChange={(e) => setOrderIdInput(e.target.value)}
+                className="max-w-md w-full" // Use w-full for flex-1
+                disabled={isFetching}
+              />
+              <Button type="submit" disabled={isFetching} className="min-w-[120px]">
+                {isFetching && searchedOrderId ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Searching
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Search
+                  </>
+                )}
+              </Button>
+            </form>
+            {/* 🔥 Download Button is placed outside the form but inside the flex container */}
+            <OrderExportButton />
+          </div>
+
 
           <div className="mt-6 border-t pt-6">
             {renderResult()}
