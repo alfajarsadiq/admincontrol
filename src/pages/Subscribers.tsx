@@ -60,11 +60,20 @@ const AVAILABLE_TAGS = [
   { value: "new customer", label: "New Customer" },
 ];
 
+// --- MultiSelect Props Interface (FIX: Added to provide types) ---
+interface MultiSelectProps {
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (selectedTags: string[]) => void;
+  className?: string;
+}
+
 // --- MultiSelect Component Definition (Moved to top to fix reference error) ---
-const MultiSelect = ({ options, selected, onChange, className }) => {
+// FIX: Applied MultiSelectProps interface
+const MultiSelect = ({ options, selected, onChange, className }: MultiSelectProps) => {
   const [open, setOpen] = useState(false);
 
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     const isSelected = selected.includes(value);
     if (isSelected) {
       onChange(selected.filter(item => item !== value));
@@ -116,6 +125,7 @@ const MultiSelect = ({ options, selected, onChange, className }) => {
 };
 
 const Subscribers = () => {
+// ... rest of the component remains the same
   const [subscribers, setSubscribers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
