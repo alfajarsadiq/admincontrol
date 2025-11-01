@@ -58,7 +58,7 @@ export interface NewCompanyPayload {
   location: string;
 }
 
-// --- SALESPERSON TYPES ---\
+// --- SALESPERSON TYPES ---
 export interface Salesperson {
   id: string;
   name: string;
