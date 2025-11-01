@@ -325,4 +325,33 @@ export const downloadOrdersByDate = async (date: string, location: string): Prom
   }
 };
 
+// 🔥 NEW FUNCTION: Download Orders by Status
+export const downloadOrdersByStatus = async (status: string): Promise<Blob> => {
+  try {
+    const response = await api.get('/orders/export', {
+      params: { status },
+      responseType: 'blob',
+    });
+    const blob = response.data as Blob;
+    if (blob.type === 'application/json') {
+      const errorText = await blob.text();
+      const errorData = JSON.parse(errorText);
+      throw new Error(errorData.message || 'Failed to download file.');
+    }
+    return blob;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      // Handle server-side error messages returned as JSON
+      if (error.response.data?.type === 'application/json') {
+        const errorText = await (error.response.data as Blob).text();
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.message);
+      }
+      throw new Error(error.response.data?.message || 'Error downloading report');
+    } else {
+      throw error;
+    }
+  }
+};
+
 export default api;
