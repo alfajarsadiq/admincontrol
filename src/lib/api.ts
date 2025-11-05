@@ -14,6 +14,8 @@ import {
   NewSalespersonPayload,
   User, 
   NewUserPayload, 
+  // 🔥 NEW IMPORT: ReportRecord type
+  ReportRecord, 
 } from '@/types'; 
 
 export interface Product {
@@ -352,6 +354,32 @@ export const downloadOrdersByStatus = async (status: string): Promise<Blob> => {
       throw error;
     }
   }
+};
+
+// 🔥 NEW FUNCTION: Trigger Manual Report Generation (POST /api/reports/send-manual)
+export const sendManualReport = async (startDate: string, endDate: string): Promise<{ message: string; recordId: string }> => {
+    try {
+        const { data } = await api.post('/reports/send-manual', { startDate, endDate });
+        return data;
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+            // Re-throw with the specific 403 error message from the backend (authMiddleware)
+            if (error.response.status === 403) {
+                 // Ensure the response message is extracted if available
+                 const serverMsg = error.response.data?.msg || "Error: Not authorized. Please log in as an administrator.";
+                 throw new Error(serverMsg);
+            }
+             // Re-throw the original server message
+             throw new Error(error.response.data?.msg || `Request failed with status code ${error.response.status}`);
+        }
+        throw new Error("An unexpected error occurred.");
+    }
+};
+
+// 🔥 NEW FUNCTION: Fetch Report History (GET /api/reports/history)
+export const fetchReportHistory = async (): Promise<ReportRecord[]> => {
+    const { data } = await api.get('/reports/history');
+    return data;
 };
 
 export default api;
