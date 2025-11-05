@@ -1,5 +1,27 @@
 // src/types.ts
 
+// --- USER TYPES (for requestedBy field in ReportRecord and general use) ---
+export interface UserSummary {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+// --- NEW REPORT RECORD TYPE ---
+export interface ReportRecord {
+  _id: string;
+  type: 'Automated' | 'Manual';
+  requestedBy: UserSummary | null;
+  status: 'Success' | 'Failed' | 'Processing';
+  dateRange: {
+    startDate: string; // Date strings returned from the backend
+    endDate: string;
+  };
+  gcsLink: string | null;
+  generatedAt: string;
+  errorMessage: string | null;
+}
+
 // --- ORDER PAGE TYPES ---
 export interface Item {
   id: string; 
