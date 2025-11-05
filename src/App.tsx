@@ -24,6 +24,8 @@ import OrderFormGeneratorPage from "./pages/OrderFormGeneratorPage";
 import { UserManagementPage } from "./pages/UserManagementPage"; 
 // 🔥 NEW IMPORT: Order Status Check Page
 import OrderStatusCheckPage from "./pages/OrderStatusCheckPage";
+// 🔥 NEW IMPORT: Order Report Page
+import OrderReportPage from "./pages/OrderReportPage";
 
 
 const queryClient = new QueryClient();
@@ -39,7 +41,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
 
-            {/* --- Routes for ADMINS ONLY --- */}
+            {/* --- Routes for ADMINS ONLY (Uses ProtectedRoute with adminOnly prop) --- */}
             <Route element={<ProtectedRoute adminOnly={true} />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/campaign-reports" element={<CampaignReports />} />
@@ -50,16 +52,17 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/products" element={<ProductManagementPage />} />
               <Route path="/salespersons" element={<SalespersonManagementPage />} />
-              {/* --- NEW: USER MANAGEMENT ROUTE --- */}
               <Route path="/users" element={<UserManagementPage />} /> 
+
+              {/* 🔥 NEW ROUTE: Monthly Order Reports (Admin Only) */}
+              <Route path="/reports/orders" element={<OrderReportPage />} /> 
             </Route>
 
-            {/* --- Routes for ALL LOGGED-IN USERS (including admin) --- */}
+            {/* --- Routes for ALL LOGGED-IN USERS (Uses ProtectedRoute without adminOnly) --- */}
             <Route element={<ProtectedRoute />}>
               <Route path="/lr-generator" element={<LrGeneratorPage />} />
               <Route path="/orders" element={<OrderPage />} />
               <Route path="/invoice-generator" element={<OrderFormGeneratorPage />} />
-              {/* 🔥 NEW ROUTE: Order Status Check */}
               <Route path="/order-status-check" element={<OrderStatusCheckPage />} /> 
             </Route>
 
