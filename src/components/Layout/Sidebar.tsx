@@ -16,6 +16,8 @@ import {
   Receipt,
   // 🔥 IMPORT THE NEW ICON
   Search,
+  // 🔥 NEW IMPORT: FileSpreadsheet is a better icon for Excel Reports
+  FileSpreadsheet, 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -39,6 +41,10 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard, role: 'admin' }, 
   { title: "Reports", path: "/campaign-reports", icon: BarChart3, role: 'admin' },
+  
+  // 🔥 NEW ITEM: Monthly Order Reports - ONLY for Admin role
+  { title: "Monthly Order Reports", path: "/reports/orders", icon: FileSpreadsheet, role: 'admin' }, 
+  
   { title: "Settings", path: "/email-settings", icon: Settings, role: 'admin' },
   { title: "Templates", path: "/email-templates", icon: FileText, role: 'admin' },
   // FIX: These roles are tagged as lr_user, but we will allow standard users to access them via code logic below
@@ -70,7 +76,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       return true;
     }
 
-    // Admins see everything
+    // Admins see everything, including the new report link
     if (admin.role === 'admin') {
        return true;
     }
