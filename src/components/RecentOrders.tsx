@@ -1,4 +1,4 @@
-// File: src/components/RecentOrders.tsx (Updated)
+// File: src/components/RecentOrders.tsx (Updated for Password-Protected Delete)
 
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -48,7 +48,7 @@ import { ConfirmedOrder } from "@/types";
 // 🔥 IMPORT NEW DATE-BASED DOWNLOAD BUTTON
 import { DownloadDeliveriesByDateButton } from "./DownloadDeliveriesByDateButton"; 
 
-// 櫨 IMPORT NEW MODAL
+// 🔥 IMPORT NEW MODAL
 import { EditOrderModal } from "./orders/EditOrderModal"; 
 
 interface RecentOrdersProps {
@@ -66,15 +66,15 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
   // State for View Details Modal
   const [selectedOrder, setSelectedOrder] = useState<ConfirmedOrder | null>(null);
   
-  // 櫨 STATE FOR EDIT MODAL
+  // 🔥 STATE FOR EDIT MODAL
   const [orderToEdit, setOrderToEdit] = useState<ConfirmedOrder | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
-  // 💥 REMOVED: excelDate state
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<ConfirmedOrder | null>(null);
   
+  // 🔥 NEW STATE: Password for deletion
+  const [deletePassword, setDeletePassword] = useState('');
   // 💥 REMOVED: isExporting state and handleExcelExport logic
 
   const queryClient = useQueryClient();
@@ -89,18 +89,23 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteOrder,
-    onSuccess: (data, orderId) => {
-      toast.success(data.msg || `Order ${orderId} deleted successfully.`);
+    // Mutation now requires both orderId and password
+    mutationFn: ({ orderId, password }: { orderId: string, password: string }) => deleteOrder(orderId, password),
+    onSuccess: (data) => {
+      // data is { msg: string }
+      toast.success(data.msg || `Order deleted successfully.`);
       queryClient.invalidateQueries({ queryKey: ["recentOrders"] });
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.msg || "Failed to delete order.";
+    onError: (error: Error) => {
+      // error.message will contain the specific backend message (e.g., "Password is incorrect")
+      const errorMessage = error.message || "Failed to delete order.";
       toast.error(errorMessage);
     },
     onSettled: () => {
+      // Reset all related states regardless of success/failure
       setOrderToDelete(null);
       setIsAlertOpen(false);
+      setDeletePassword(''); // 🔥 IMPORTANT: Clear password on settle
     }
   });
 
@@ -108,22 +113,28 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
 
   const handleDeleteClick = (order: ConfirmedOrder) => {
     setOrderToDelete(order);
+    setDeletePassword(''); // Ensure password is empty when opening dialog
     setIsAlertOpen(true);
   };
 
   const confirmDelete = () => {
-    if (orderToDelete) {
-      deleteMutation.mutate(orderToDelete.orderId);
+    if (orderToDelete && deletePassword) {
+      deleteMutation.mutate({ 
+        orderId: orderToDelete.orderId, 
+        password: deletePassword 
+      });
+    } else {
+        toast.error("Please enter the password to confirm deletion.");
     }
   };
   
-  // 櫨 NEW HANDLER: Opens the edit modal
+  // 🔥 NEW HANDLER: Opens the edit modal
   const handleEditClick = (order: ConfirmedOrder) => {
     setOrderToEdit(order);
     setIsEditModalOpen(true);
   };
   
-  // 櫨 NEW HANDLER: Closes the edit modal and resets state
+  // 🔥 NEW HANDLER: Closes the edit modal and resets state
   const handleCloseEditModal = () => {
     setOrderToEdit(null);
     setIsEditModalOpen(false);
@@ -144,27 +155,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
               {/* Existing "Today's Deliveries" button */}
               <DownloadTodaysDeliveriesButton />
               
-              {/* 💥 REMOVED OLD DATE INPUT AND EXPORT BUTTON
-              <Label htmlFor="excel-date" className="text-sm font-medium sr-only">
-                Export Date:
-              </Label>
-              <Input
-                id="excel-date"
-                type="date"
-                value={excelDate}
-                onChange={(e) => setExcelDate(e.target.value)}
-                className="w-auto"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExcelExport}
-                disabled={isExporting} 
-                title="Download all orders for the selected date"
-              >
-                ... (Export Button Content)
-              </Button>
-              */}
+              {/* 💥 REMOVED OLD DATE INPUT AND EXPORT BUTTON */}
             </div>
           </CardHeader>
           {/* --- END OF HEADER UPDATE --- */}
@@ -215,7 +206,7 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             
-                            {/* 櫨 NEW EDIT BUTTON */}
+                            {/* 🔥 NEW EDIT BUTTON */}
                             <Button
                               variant="secondary"
                               size="icon"
@@ -321,14 +312,14 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
         </DialogContent>
       </Dialog>
       
-      {/* 櫨 NEW EDIT MODAL INTEGRATION */}
+      {/* 🔥 NEW EDIT MODAL INTEGRATION */}
       <EditOrderModal 
         order={orderToEdit}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
       />
 
-      {/* Delete Confirmation Dialog (Remains unchanged) */}
+      {/* Delete Confirmation Dialog (UPDATED for Password Input) */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -336,19 +327,43 @@ export const RecentOrders: React.FC<RecentOrdersProps> = () => {
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
               order <span className="font-medium">{orderToDelete?.orderId}</span> from
-              the database.
+              the database. **You must enter the administrator password to confirm.**
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {/* 🔥 PASSWORD INPUT */}
+          <div className="space-y-2 pt-2">
+            <Label htmlFor="delete-password">Administrator Password</Label>
+            <Input
+              id="delete-password"
+              type="password"
+              placeholder="Enter password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              disabled={deleteMutation.isPending}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    confirmDelete();
+                }
+              }}
+            />
+          </div>
+
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOrderToDelete(null)}>
+            <AlertDialogCancel 
+              onClick={() => {
+                setOrderToDelete(null);
+                setDeletePassword(''); // Clear password on cancel
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deleteMutation.isPending}
+              disabled={deleteMutation.isPending || deletePassword.length === 0}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Confirm & Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
