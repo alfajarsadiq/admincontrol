@@ -96,7 +96,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       
       // Check for specific password error from backend (do not redirect for this)
-      if (error.response.data?.msg?.includes('Invalid password')) {
+      if (error.response.data?.msg?.includes('Invalid password') || error.response.data?.msg?.includes('Password is incorrect')) {
         return Promise.reject(new Error(error.response.data.msg)); 
       }
       
@@ -176,8 +176,15 @@ export const fetchRecentOrders = async (): Promise<ConfirmedOrder[]> => {
   return data;
 };
 
-export const deleteOrder = async (orderId: string): Promise<{ msg: string }> => {
-  const { data } = await api.delete(`/orders/${orderId}`);
+/**
+ * @desc Delete an order by ID, requiring an admin password in the request body.
+ * @route DELETE /api/orders/:orderId
+ */
+export const deleteOrder = async (orderId: string, password: string): Promise<{ msg: string }> => {
+  const { data } = await api.delete(`/orders/${orderId}`, {
+    // 🔥 UPDATED: Send the password in the request body for verification
+    data: { password }
+  });
   return data;
 };
 
